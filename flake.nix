@@ -4,6 +4,9 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
+
+    #
+    home-manager.url = "github:nix-community/home-manager/release-22.11";
   };
 
   outputs = inputs@{ flake-parts, ... }:
@@ -15,27 +18,19 @@
         lib = inputs.nixpkgs.lib;
       in {
         debug = true;
-        systems = [ "x86_64-linux" ];
+        systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
         imports = [ flakeModules.default ];
 
         os = {
           Oxygen = {
-            system = "x86_64-lin";
-            # users = [{ name = "exampleUser"; }];
+            system = "x86_64-linux";
+            users = [{ name = "exampleUser1"; }];
           };
           Nitrogen = {
             system = "x86_64-linux";
-            # users = [{ name = "exampleUser"; }];
+            # users = [{ name = "exampleUser2"; }];
           };
         };
-        # perSystem = _: {
-        #   os = {
-        #     Oxygen = {
-        #       system = "x86_64-linux";
-        #       # users = [{ name = "exampleUser"; }];
-        #     };
-        #   };
-        # };
 
         flake = { inherit lib flakeModules; };
       });

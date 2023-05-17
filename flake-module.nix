@@ -1,26 +1,43 @@
 { config, lib, flake-parts-lib, inputs, ... }:
 let
-  inherit (lib) genAttrs mapAttrs mkOption types zipAttrs attrValues;
+  inherit (lib)
+    genAttrs mapAttrs mkOption types zipAttrs attrValues elemAt mkIf;
+
+  inherit (builtins) lessThan length;
 
   cfg = config.os;
 
-  mkNixosConfiguration = _: hostConfig:
+  mkNixosConfiguration = host: hostConfig:
     inputs.nixpkgs.lib.nixosSystem {
       inherit (hostConfig) system;
       modules = [ ];
     };
 
-  nixosConfigurations = lib.mapAttrs mkNixosConfiguration config.os;
+  nixosConfigurations = lib.mapAttrs mkNixosConfiguration cfg;
+
+  userModule = {
+    options = {
+      name = mkOption {
+        type = types.str;
+        default = "";
+        description = "The name of the user";
+      };
+    };
+  };
 
 in {
   options.os = mkOption {
     type = types.lazyAttrsOf (types.submodule ({ name, ... }: {
       options = {
-        system = lib.mkOption {
-          type = lib.types.enum [ "x86_64-linux" "aarch64-linux" ];
+        system = mkOption { type = lib.types.enum config.systems; };
+        users = mkOption {
+          type = types.listOf (types.submodule userModule);
+          default = [ ];
+          description = "List of user definitions";
         };
       };
     }));
+    default = { };
   };
 
   config.flake = { inherit nixosConfigurations; };
