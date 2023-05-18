@@ -11,27 +11,23 @@
 
   outputs = inputs@{ flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; }
-    ({ withSystem, flake-parts-lib, ... }:
-      let
-        inherit (flake-parts-lib) importApply;
-        flakeModules.default = ./flake-module.nix;
-        lib = inputs.nixpkgs.lib;
-      in {
-        debug = true;
-        systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
-        imports = [ flakeModules.default ];
+    (let flakeModules.default = import ./flake-module.nix;
+    in {
+      debug = true;
+      systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
+      imports = [ flakeModules.default ];
 
-        os = {
-          Oxygen = {
-            system = "x86_64-linux";
-            users = [{ name = "exampleUser1"; }];
-          };
-          Nitrogen = {
-            system = "x86_64-linux";
-            # users = [{ name = "exampleUser2"; }];
-          };
+      os = {
+        Oxygen = {
+          system = "x86_64-linux";
+          users = [ { name = "exampleUser1"; } { name = "xxxx"; } ];
         };
+        # Nitrogen = {
+        #   system = "x86_64-linux";
+        #   # users = [{ name = "exampleUser2"; }];
+        # };
+      };
 
-        flake = { inherit lib flakeModules; };
-      });
+      flake = { inherit flakeModules; };
+    });
 }

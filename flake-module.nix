@@ -1,5 +1,10 @@
 { config, lib, flake-parts-lib, inputs, ... }:
+
 let
+
+  # lib = inputs.nixpkgs.lib.extend
+  #   (final: prev: prev // { os = import ./lib final; });
+
   inherit (lib)
     genAttrs mapAttrs mkOption types zipAttrs attrValues elemAt mkIf;
 
@@ -7,15 +12,9 @@ let
 
   cfg = config.os;
 
-  mkNixosConfiguration = host: hostConfig:
-    inputs.nixpkgs.lib.nixosSystem {
-      inherit (hostConfig) system;
-      modules = [ ];
-    };
+  nixosConfigurations = { }; # mapAttrs lib.os.mkNixosConfiguration cfg;
 
-  nixosConfigurations = lib.mapAttrs mkNixosConfiguration cfg;
-
-  userModule = {
+  usersModule = {
     options = {
       name = mkOption {
         type = types.str;
@@ -31,7 +30,7 @@ in {
       options = {
         system = mkOption { type = lib.types.enum config.systems; };
         users = mkOption {
-          type = types.listOf (types.submodule userModule);
+          type = types.listOf (types.submodule usersModule);
           default = [ ];
           description = "List of user definitions";
         };
@@ -44,4 +43,3 @@ in {
 
   _file = __curPos.file;
 }
-
