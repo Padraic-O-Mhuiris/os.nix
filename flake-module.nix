@@ -1,18 +1,14 @@
-{ config, lib, flake-parts-lib, inputs, ... }:
+{ config, flake-parts-lib, inputs, ... }:
 
 let
+  lib = inputs.nixpkgs.lib.extend
+    (final: prev: prev // { os = import ./lib { lib = final; }; });
 
-  # lib = inputs.nixpkgs.lib.extend
-  #   (final: prev: prev // { os = import ./lib final; });
+  inherit (lib) mkOption types throwIfNot pathExists fallibleImport hasAttr;
+  inherit (lib.os) mkNixosConfigurations;
 
-  inherit (lib)
-    genAttrs mapAttrs mkOption types zipAttrs attrValues elemAt mkIf;
-
-  inherit (builtins) lessThan length;
-
-  cfg = config.os;
-
-  nixosConfigurations = { }; # mapAttrs lib.os.mkNixosConfiguration cfg;
+  os = throwIfNot (hasAttr "os" config.flake) "No os attr defined in flake"
+    config.flake.os;
 
   usersModule = {
     options = {
@@ -25,6 +21,7 @@ let
   };
 
 in {
+  config = { inherit os; };
   options.os = mkOption {
     type = types.lazyAttrsOf (types.submodule ({ name, ... }: {
       options = {
@@ -39,7 +36,13 @@ in {
     default = { };
   };
 
-  config.flake = { inherit nixosConfigurations; };
-
-  _file = __curPos.file;
+  config.flake = {
+    inherit lib;
+    nixosConfigurations = mkNixosConfigurations config.os;
+  };
 }
+
+# TODO
+#
+# - Enforce usage of an os.nix file which returns just an attrset, throw if file does not exist
+# - Will require flake-parts
