@@ -1,9 +1,9 @@
 { host, hostConfig }:
 
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 
 let
-  inherit (lib) mkOption types elemAt __os__;
+  inherit (lib) mkOption types elemAt throwIf;
   inherit (builtins) length head;
 
   cfg = config.os;
@@ -17,17 +17,18 @@ in {
     };
 
     defaultUser = mkOption {
-      type = with types; nullOr str;
+      type = types.str;
       readOnly = true;
-      default = __os__.defaultUser;
+      default = throwIf ((length hostConfig.users) == 0)
+        "No users have been defined for ${host}" (head hostConfig.users).name;
     };
 
-    users = mkOption {
-      type = with types; listOf str;
-      readOnly = true;
-      default = __os__.users;
-    };
+    # users = mkOption {
+    #   type = with types; listOf str;
+    #   readOnly = true;
+    #   default = __os__.users;
+    # };
   };
 
-  config = { inherit (__os__) assertions; };
+  config = { };
 }

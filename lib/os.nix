@@ -1,4 +1,4 @@
-# This lib file is to be passed in context of the mkNixosConfiguration fn
+# This lib file is to be passed in context of the mkNixosConfiguration function
 # defined in the os flakeModule
 
 { host, hostConfig, ... }@lib:

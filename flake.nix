@@ -16,19 +16,6 @@
       debug = true;
       systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
       imports = [ flakeModules.default ];
-      flake = {
-        inherit flakeModules;
-
-        os = {
-          Oxygen = {
-            system = "x86_64-linux";
-            users = [ { name = "exampleUser1"; } { name = "xxxx"; } ];
-          };
-          # Nitrogen = {
-          #   system = "x86_64-linux";
-          #   # users = [{ name = "exampleUser2"; }];
-          # };
-        };
-      };
+      flake = { inherit flakeModules; };
     });
 }

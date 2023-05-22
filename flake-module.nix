@@ -1,14 +1,16 @@
-{ config, flake-parts-lib, inputs, ... }:
+{ config, flake-parts-lib, inputs, flake, ... }:
 
 let
-  lib = inputs.nixpkgs.lib.extend
-    (final: prev: prev // { os = import ./lib { lib = final; }; });
+  lib = inputs.nixpkgs.lib.extend (final: prev:
+    prev // {
+      os = import ./lib {
+        inherit inputs;
+        lib = final;
+      };
+    });
 
-  inherit (lib) mkOption types throwIfNot pathExists fallibleImport hasAttr;
-  inherit (lib.os) mkNixosConfigurations;
-
-  os = throwIfNot (hasAttr "os" config.flake) "No os attr defined in flake"
-    config.flake.os;
+  inherit (lib) mkOption types throwIf throwIfNot pathExists mapAttrs length;
+  inherit (lib.os) mkNixosConfiguration;
 
   usersModule = {
     options = {
@@ -21,7 +23,10 @@ let
   };
 
 in {
-  config = { inherit os; };
+  config.os = throwIfNot (pathExists ./os.nix)
+    "Could not find ./os.nix in the project root directory"
+    (import ./os.nix { inherit inputs lib flake; });
+
   options.os = mkOption {
     type = types.lazyAttrsOf (types.submodule ({ name, ... }: {
       options = {
@@ -29,6 +34,7 @@ in {
         users = mkOption {
           type = types.listOf (types.submodule usersModule);
           default = [ ];
+          apply = x: throwIf (length x == 0) "No users listed for" x;
           description = "List of user definitions";
         };
       };
@@ -38,7 +44,7 @@ in {
 
   config.flake = {
     inherit lib;
-    nixosConfigurations = mkNixosConfigurations config.os;
+    nixosConfigurations = mapAttrs mkNixosConfiguration config.os;
   };
 }
 
